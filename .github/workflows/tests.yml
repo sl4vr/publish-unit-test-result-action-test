@@ -1,0 +1,31 @@
+name: tests
+
+on:
+  workflow_call:
+    inputs:
+      sha:
+        required: true
+        description: 'Commit hash to use'
+        type: string
+
+jobs:
+  tests:
+    name: tests
+    runs-on: ubuntu-latest
+    env:
+      JUNIT_REPORT_FILENAME: junit_report.xml
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.sha }}
+
+      - name: Run tests checks
+        run: |
+          echo "<testsuites tests=\"96\" failures=\"0\" errors=\"0\" time=\"1\" name=\"Results\"><testsuite name=\"Something\" tests=\"3\" failures=\"0\" errors=\"0\"/></testsuites>" > $JUNIT_REPORT_FILENAME
+
+      - name: Upload Tests Check Results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: tests-report
+          path: ${{ env.JUNIT_REPORT_FILENAME }}

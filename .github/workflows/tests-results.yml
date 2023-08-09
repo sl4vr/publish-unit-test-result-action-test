@@ -1,0 +1,50 @@
+name: Publish tests results
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+
+jobs:
+  tests-results:
+    name: Tests Results
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion != 'skipped'
+    env:
+      JUNIT_REPORT_FILENAME: junit_report.xml
+    permissions:
+      checks: write
+
+      # needed unless run with comment_mode: off
+      pull-requests: write
+
+      # only needed for private repository
+      # contents: read
+
+      # only needed for private repository
+      # issues: read
+
+      # required by download step to access artifacts API
+      actions: read
+
+    steps:
+      - name: Download and Extract Artifacts
+        uses: dawidd6/action-download-artifact@246dbf436b23d7c49e21a7ab8204ca9ecd1fe615
+        with:
+          run_id: ${{ github.event.workflow_run.id }}
+          path: artifacts
+
+      - name: Publish Tests Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          event_file: artifacts/ci-event-file/event.json
+          event_name: ${{ github.event.workflow_run.event }}
+          junit_files: artifacts/tests-report/${{ env.JUNIT_REPORT_FILENAME }}
+          check_name: Tests Checks Report
+          report_individual_runs: true
+          job_summary: true
+          comment_title: "Tests Checks Report"
+          comment_mode: "failures"
+          fail_on: "test failures"
+          check_run_annotations: "all tests"
