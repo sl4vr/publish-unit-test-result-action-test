@@ -10,12 +10,22 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  setup:
+    name: "Setup"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Upload event file 
+        uses: actions/upload-artifact@v3
+        with:
+          name: ci-event-file
+          path: ${{ github.event_path }}
   tests:
     name: tests
     uses: ./.github/workflows/tests.yml
     with:
       sha: ${{ needs.setup.outputs.sha }}
     secrets: inherit
+    needs: setup
 
   test-job:
     name: Test Step
@@ -23,13 +33,3 @@ jobs:
     needs: tests
     steps:
       - run: env
-  
-  event_file:
-    name: "Upload event file"
-    runs-on: ubuntu-latest
-    steps:
-      - name: Upload
-        uses: actions/upload-artifact@v3
-        with:
-          name: ci-event-file
-          path: ${{ github.event_path }}
